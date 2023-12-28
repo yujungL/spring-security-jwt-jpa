@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>my</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js?version=202012281558"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="js/common.js"></script>
+    <link rel="icon" href="../images/favicon.ico">
+    <link rel="stylesheet" href="fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
+    <link rel="stylesheet" href="css/register-style.css">
+    <meta name="robots" content="noindex, follow">
+<body>
+<div class="wrapper" style="background-image: url('images/bg.jpg');">
+    <div class="inner">
+        <div class="image-holder welcome-image">
+            <script>
+                const num = Math.floor(Math.random() * 10) % 5 + 1;
+                document.write('<img src="images/dog' + num + '.jpg" alt="dog' + num + '">');
+            </script>
+        </div>
+        <form action="/login" id="login-form" method="post">
+            <h3>Login Form</h3>
+            <div class="form-group">
+                <input type="text" name="userId" placeholder="ID" class="form-control">
+                <input type="text" name="password" placeholder="PW" class="form-control">
+            </div>
+<!--            <button type="submit" id="login-button">Login-->
+<!--                <i class="zmdi zmdi-arrow-right"></i>-->
+<!--            </button>-->
+            <button type="button" id="login-button">Login
+                <i class="zmdi zmdi-arrow-right"></i>
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+
+<script>
+
+$(document).ready(function(){
+    $("#login-button").on("click", function(){ login() });
+});
+
+function login(){
+    $.ajax({
+        type : "POST",
+        dataType : "json",
+        data : {
+            userId: $("input[name=userId]").val(),
+            password: $("input[name=password]").val(),
+        },
+        async: true,
+        url : "/login",
+        success : function(json) {
+            console.log(json);
+            if (json.accessToken != null && json.accessToken != '') {
+                var now = new Date();
+                var expireTime = new Date(now.getTime() + 60 * 60 * 1000); // 현재 시간에 1시간을 더합니다.
+                document.cookie = 'access_token=' + json.accessToken + ';expires=' + expireTime.toUTCString() + ';path=/';
+                document.cookie = 'refresh_token=' + json.refreshToken + ';expires=' + expireTime.toUTCString() + ';path=/';
+
+                location.href = "/";
+            } else {
+                alert(json.resultMsg);
+                return false;
+            }
+        },
+        error : function (jqXHR, textStatus, errorThrown){
+            alert(jqXHR.responseJSON.message);
+            location.href = jqXHR.responseJSON.redirect;
+        }
+    });
+}
+
+</script>
+
+</html>

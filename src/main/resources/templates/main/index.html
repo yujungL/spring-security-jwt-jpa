@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>my</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="js/common.js"></script>
+    <link rel="favicon" href="images/favicon.ico">
+    <link rel="stylesheet" href="fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
+    <link rel="stylesheet" href="css/register-style.css">
+    <meta name="robots" content="noindex, follow">
+<body>
+<div class="wrapper" style="background-image: url('images/bg.jpg');">
+    <div class="inner">
+        <div class="center-holder">
+            <div id="welcome-msg">
+                <h3>Welcome</h3>
+            </div>
+            <div id="button-wrapper">
+                <button onclick="location.href='/login'" id="login-button">Login
+                    <i class="zmdi zmdi-arrow-right"></i>
+                </button>
+                <button onclick="location.href='/register'" id="register-button">Register
+                    <i class="zmdi zmdi-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(function(){
+    loginCheck()
+        .then(result => {
+            if (result === true) {
+                return getLoginInfo();
+            } else {
+                return null;
+            }
+        })
+        .then(result => {
+            if(result != null){
+                $('#welcome-msg').html('<h4>Hello, <h4><p>' + result.firstName + ' ' + result.lastName + '</p>');
+                $('#button-wrapper').html('<button onclick="location.href=\'/member/mypage\'">My Page<i class="zmdi zmdi-arrow-right"></i></button>');
+            }
+        })
+        .catch(error => {
+            console.error('에러 발생:', error);
+        });
+});
+</script>
+
+
+</body>
+</html>

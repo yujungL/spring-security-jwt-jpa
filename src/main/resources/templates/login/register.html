@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>my</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="js/common.js"></script>
+    <link rel="favicon" href="images/favicon.ico">
+    <link rel="stylesheet" href="fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
+    <link rel="stylesheet" href="css/register-style.css">
+    <meta name="robots" content="noindex, follow">
+<body>
+<div class="wrapper" style="background-image: url('images/bg.jpg');">
+    <div class="inner">
+        <div class="image-holder welcome-image">
+            <script>
+                const num = Math.floor(Math.random() * 10) % 5 + 1;
+                document.write('<img src="images/dog' + num + '.jpg" alt="dog' + num + '">');
+            </script>
+        </div>
+        <form action="/api/login/register-proc" method="post" id="register-form">
+            <h3>Registration Form</h3>
+            <div class="form-group">
+                <input type="text" name="firstName" placeholder="First Name" class="form-control" required>
+                <input type="text" name="lastName" placeholder="Last Name" class="form-control" required>
+            </div>
+            <div class="form-wrapper">
+                <input type="text" name="userId" placeholder="ID" class="form-control" required>
+                <i class="zmdi zmdi-account"></i>
+            </div>
+            <div class="form-wrapper">
+                <input type="password" name="password" placeholder="Password" class="form-control" required>
+                <i class="zmdi zmdi-lock"></i>
+            </div>
+            <div class="form-wrapper">
+                <input type="password" placeholder="Confirm Password" class="form-control" required>
+                <i class="zmdi zmdi-lock"></i>
+            </div>
+            <div class="form-wrapper">
+                <input type="text" name="email" placeholder="Email Address" class="form-control" required>
+                <i class="zmdi zmdi-email"></i>
+            </div>
+            <button type="submit">Register
+                <i class="zmdi zmdi-arrow-right"></i>
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
