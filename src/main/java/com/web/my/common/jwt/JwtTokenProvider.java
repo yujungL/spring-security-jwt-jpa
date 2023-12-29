@@ -1,13 +1,9 @@
 package com.web.my.common.jwt;
 
-import com.web.my.common.bean.Role;
-import com.web.my.member.mapper.MemberMapper;
+import com.web.my.common.util.RedisUtil;
 import com.web.my.member.repository.MemberRepository;
 import com.web.my.member.service.MemberDetailService;
-import com.web.my.member.vo.Member;
-import com.web.my.member.vo.MemberDetail;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import jakarta.annotation.PostConstruct;
@@ -27,6 +23,7 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,10 +35,12 @@ public class JwtTokenProvider {
     @Value("${jwt.secret.key}")
     private String jwtSecretKey;
 
-    @Autowired
     MemberRepository memberRepository;
-
     MemberDetailService memberDetailService;
+
+    @Autowired
+    RedisUtil redisUtil;
+
     private Key secretKey;
     private final long exp = 1000L * 60 * 60; //만료시간 1H
 
@@ -57,11 +56,13 @@ public class JwtTokenProvider {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
+        Date expireDate = new Date(System.currentTimeMillis() + exp);
+
         //Access Token 생성
         String accessToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("role", authorities)
-                .setExpiration(new Date(System.currentTimeMillis() + exp))
+                .setExpiration(expireDate)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
 
@@ -69,14 +70,12 @@ public class JwtTokenProvider {
         String refreshToken = Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("role", authorities)
-                .setExpiration(new Date(System.currentTimeMillis() + exp))
+                .setExpiration(expireDate)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
         
-        //Refresh Token DB 저장
-        Member member = memberRepository.findByUserId(authentication.getName());
-        member.setRtk(refreshToken);
-        memberRepository.save(member);
+        //redis에 리프레시 토큰 저장하기
+        redisUtil.setValues(authentication.getName(), refreshToken);
 
         return JwtToken.builder()
                 .grantType("Bearer")
@@ -107,7 +106,7 @@ public class JwtTokenProvider {
 
     // token으로 사용자 id 조회
     public String getLoginIdFromToken(String token) {
-        return getClaimFromToken(token, Claims::getId);
+        return getClaimFromToken(token, Claims::getSubject);
     }
 
     // token으로 사용자 속성정보 조회
@@ -121,7 +120,7 @@ public class JwtTokenProvider {
         return Jwts.parser().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 
-    // Request의 Header에서 token 값 조회 "authorization" : "token'
+    // Request의 Header에서 token 값 조회 "authorization" : "token"
     public String resolveToken(HttpServletRequest request) {
         if(request.getHeader("authorization") != null )
             return request.getHeader("authorization").substring(7);
@@ -144,6 +143,11 @@ public class JwtTokenProvider {
         }
 
         return false;
+    }
+
+    // 토큰 만료시간 조회
+    public long getTokenExpirationTime(String token) {
+        return getAllClaimsFromToken(token).getExpiration().getTime();
     }
 
     // 토큰 복호화
