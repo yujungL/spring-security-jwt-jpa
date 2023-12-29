@@ -5,6 +5,11 @@ import lombok.*;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.sql.Timestamp;
 
 
 @Data
@@ -12,6 +17,9 @@ import org.hibernate.annotations.DynamicUpdate;
 @Setter
 @ToString
 @Entity
+@EntityListeners(AuditingEntityListener.class) // Auditing 기능 작용 (@CreatedDate 등)
+//@NoArgsConstructor
+//@AllArgsConstructor
 @DynamicUpdate  // 변경된 필드만 업데이트 (이거 안쓰면 빈거 전부 null 로 업데이트 됨)
 @DynamicInsert  // 변경된 필드만 인서트
 @Table(name = "member")
@@ -29,6 +37,11 @@ public class Member {
     private String email;
 
     private String role;
-    private String rtk;
+
+    @CreatedDate
+    private Timestamp regDate;
+
+    @LastModifiedDate
+    private Timestamp uptDate;
 
 }
