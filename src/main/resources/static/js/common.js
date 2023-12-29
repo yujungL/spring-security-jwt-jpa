@@ -33,8 +33,8 @@ function loginCheck() {
 }
 
 function getLoginInfo() {
-    const token = getCookie('access_token');
     const url = "/api/login/login-info";
+    const token = getCookie('access_token');
 
     if (token != null) {
         return fetch(url, {
@@ -67,7 +67,40 @@ function getLoginInfo() {
     }
 }
 
-//쿠키값 가져오기
+function logout(){
+    const url = '/api/login/logout-proc';
+    const token = getCookie("access_token");
+
+    fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          body: JSON.stringify({
+              refreshToken: getCookie("refresh_token")
+          })
+        })
+        .then(response => {
+          if (response.ok) {
+            deleteCookie('access_token');
+            deleteCookie('refresh_token');
+            location.reload(true);
+          } else {
+            console.log('실패');
+          }
+        })
+        .catch(error => {
+          console.log('오류 발생:', error);
+        });
+}
+
+function setCookie(cookieName, value){
+    var now = new Date();
+    var expireTime = new Date(now.getTime() + 60 * 60 * 1000); // 현재 시간에 1시간을 더합니다.
+    document.cookie = cookieName + '=' + value + ';expires=' + expireTime.toUTCString() + ';path=/';
+}
+
 function getCookie(cookieName) {
   const cookies = document.cookie.split('; '); // 쿠키 문자열을 ; 공백을 기준으로 분리하여 배열로 만듦
   for (let i = 0; i < cookies.length; i++) {
@@ -79,6 +112,12 @@ function getCookie(cookieName) {
     }
   }
   return null; // 해당하는 쿠키가 없을 경우 null 반환
+}
+
+function deleteCookie(cookieName){
+    var now = new Date();
+    var expireTime = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000)); //1년 전
+    document.cookie = cookieName + '=;expires=' + expireTime.toUTCString() + ';path=/';
 }
 
 function goPage(url, token){
@@ -100,8 +139,6 @@ function goPage(url, token){
       console.error('오류 발생:', error);
     });
 }
-
-
 
 function httpRequest(method, url, body, success, fail){
     fetch(url, {

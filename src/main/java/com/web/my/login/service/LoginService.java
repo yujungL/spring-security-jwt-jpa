@@ -1,10 +1,12 @@
 package com.web.my.login.service;
 
+import com.web.my.common.bean.Response;
+import com.web.my.common.bean.ResponseStatus;
 import com.web.my.common.bean.Role;
 import com.web.my.common.jwt.JwtToken;
 import com.web.my.common.jwt.JwtTokenProvider;
+import com.web.my.common.util.RedisUtil;
 import com.web.my.common.util.SecurityUtil;
-import com.web.my.member.mapper.MemberMapper;
 import com.web.my.member.repository.MemberRepository;
 import com.web.my.member.vo.Member;
 import com.web.my.member.vo.MemberDetail;
@@ -13,6 +15,7 @@ import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -39,6 +43,8 @@ public class LoginService {
     MemberRepository memberRepository;
     @Autowired
     PasswordEncoder passwordEncoder;
+    @Autowired
+    RedisUtil redisUtil;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -64,7 +70,7 @@ public class LoginService {
     }
 
     @Transactional
-    public JwtToken register(Member member){
+    public Response register(Member member){
         Member duplicate = memberRepository.findByUserId(member.getUserId());
         if(duplicate != null){
             throw new RuntimeException("이미 가입되어있는 유저입니다.");
@@ -74,9 +80,9 @@ public class LoginService {
         Member insertData = memberRepository.save(member);
 
         if(insertData != null){
-            return this.login(insertData.getUserId(), insertData.getPassword());
+            return new Response(ResponseStatus.SUCCESS, member.getUserId());
         }else {
-            throw new RuntimeException("가입 실패.");
+            return new Response(ResponseStatus.FAILURE, member.getUserId());
         }
     }
 
@@ -103,17 +109,35 @@ public class LoginService {
         return resultMap;
     }
 
+    public Response logout(String accessToken, String refreshToken){
+        // 로그아웃 하고 싶은 토큰이 유효한 지 먼저 검증하기
+        if(jwtTokenProvider.validateToken(accessToken)){
+            String userId = jwtTokenProvider.getLoginIdFromToken(accessToken);
+            String redisRefreshToken = redisUtil.getValues(userId);
+
+            // Refresh Token을 삭제
+            String deleted = redisUtil.deleteKey(userId);
+
+            // 해당 Access Token 유효시간을 가지고 와서 BlackList에 저장하기
+            long expiration = jwtTokenProvider.getTokenExpirationTime(accessToken);
+            redisUtil.setValues(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+
+            return new Response<>(ResponseStatus.SUCCESS);
+        }else {
+            return new Response<>(ResponseStatus.NONEAUTH);
+        }
+    }
+
     // jwt token 재발급
-    public JwtToken reIssueAccessToken(HttpServletRequest request){
+    public JwtToken reIssueAccessToken(String rft){
         Map<String, Object> resultMap = SecurityUtil.getCurrentMember();
         String userId = resultMap.get("userId").toString();
 
-        String savedRtk = memberRepository.findByUserId(userId).getRtk();
+        String savedRtk = redisUtil.getValues(userId);
         if(savedRtk == null || "".equals(savedRtk)){
             return null;
         }
 
-        String rft = (request.getAttribute("refreshToken") != null ? request.getAttribute("refreshToken").toString() : "");
         if(savedRtk.equals(rft)){
             Authentication authentication = jwtTokenProvider.getAuthentication(savedRtk);
             JwtToken token = jwtTokenProvider.createToken(authentication);

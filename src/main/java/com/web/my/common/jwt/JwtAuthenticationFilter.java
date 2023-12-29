@@ -1,18 +1,15 @@
 package com.web.my.common.jwt;
 
-import com.web.my.member.repository.MemberRepository;
-import com.web.my.member.service.MemberDetailService;
-import com.web.my.member.vo.Member;
+import com.web.my.common.util.RedisUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -23,8 +20,11 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends GenericFilterBean {
 
     private final JwtTokenProvider jwtTokenProvider;
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    private final RedisUtil redisUtil;
+
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, RedisUtil redisUtil) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.redisUtil = redisUtil;
     }
 
     @Override
@@ -34,15 +34,22 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
         //토큰 유효성 검사
         if(token != null && jwtTokenProvider.validateToken(token)){
-            //토큰이 유효할 경우 토큰에서 Authentication 객체를 가지고 와서 SecurityContext 에 저장
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
             String loginId = jwtTokenProvider.getLoginIdFromToken(token);
+            String isLogout = "";
+            if(loginId != null){
+                // Redis에 해당 accessToken logout 여부를 확인
+                isLogout = redisUtil.getValues(token);
+            }
 
-            request.setAttribute("userId", loginId);
-            request.setAttribute("auth", authentication.getAuthorities().stream().collect(Collectors.toList()));
+            // 로그아웃이 없는(되어 있지 않은) 경우 해당 토큰은 정상적으로 작동하기
+            if (ObjectUtils.isEmpty(isLogout)) {
+                //토큰이 유효할 경우 토큰에서 Authentication 객체를 가지고 와서 SecurityContext 에 저장
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
+                request.setAttribute("userId", loginId);
+                request.setAttribute("auth", authentication.getAuthorities().stream().collect(Collectors.toList()));
+            }
         }
         chain.doFilter(request, response);
     }

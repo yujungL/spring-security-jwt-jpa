@@ -1,20 +1,17 @@
 package com.web.my.config;
 
-import com.web.my.common.bean.Role;
 import com.web.my.common.jwt.JwtAccessDeniedHandler;
 import com.web.my.common.jwt.JwtAuthenticationEntryPoint;
 import com.web.my.common.jwt.JwtAuthenticationFilter;
 import com.web.my.common.jwt.JwtTokenProvider;
+import com.web.my.common.util.RedisUtil;
 import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -30,8 +27,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-    public SecurityConfig(JwtTokenProvider jwtTokenProvider) {
+    private final RedisUtil redisUtil;
+    public SecurityConfig(JwtTokenProvider jwtTokenProvider, RedisUtil redisUtil) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.redisUtil = redisUtil;
     }
 
     @Bean
@@ -68,7 +67,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, redisUtil), UsernamePasswordAuthenticationFilter.class)
         ;
 
         return http.build();

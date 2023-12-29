@@ -42,7 +42,9 @@ $(function(){
         .then(result => {
             if(result != null){
                 $('#welcome-msg').html('<h4>Hello, <h4><p>' + result.firstName + ' ' + result.lastName + '</p>');
-                $('#button-wrapper').html('<button onclick="location.href=\'/member/mypage\'">My Page<i class="zmdi zmdi-arrow-right"></i></button>');
+                $('#button-wrapper').html('<button onclick="location.href=\'/member/mypage\'">My Page<i class="zmdi zmdi-arrow-right"></i></button>'
+                +'<button onclick="logout();">Logout<i class="zmdi zmdi-arrow-right"></i></button>'
+                );
             }
         })
         .catch(error => {

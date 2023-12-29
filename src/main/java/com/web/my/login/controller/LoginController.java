@@ -1,6 +1,8 @@
 package com.web.my.login.controller;
 
+import com.web.my.common.bean.Response;
 import com.web.my.common.jwt.JwtToken;
+import com.web.my.common.jwt.JwtTokenProvider;
 import com.web.my.login.service.LoginService;
 import com.web.my.member.vo.Member;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +24,8 @@ public class LoginController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     private final LoginService loginService;
     public LoginController(LoginService loginService) {
@@ -64,13 +68,22 @@ public class LoginController {
         return ResponseEntity.ok(token);
     }
 
+    @ResponseBody
+    @PostMapping("/api/login/logout-proc")
+    public Response logoutProc(HttpServletRequest request, @RequestBody Map<String, Object> param){
+        String accessToken = jwtTokenProvider.resolveToken(request);
+        String refreshToken = param.get("refreshToken").toString();
+
+        return loginService.logout(accessToken, refreshToken);
+    }
+
+    @ResponseBody
     @PostMapping("/api/login/register-proc")
-    public String registerProc(@ModelAttribute Member member){
+    public Response registerProc(HttpServletRequest request, Member member){
         if(member == null){
             return null;
         }
-        loginService.register(member);
-        return "/main/index.html";
+        return loginService.register(member);
     }
 
     @ResponseBody
@@ -91,7 +104,8 @@ public class LoginController {
     @ResponseBody
     @PostMapping("/api/login/reissue")
     public ResponseEntity<JwtToken> tokenReIssue(HttpServletRequest request){
-        JwtToken token = loginService.reIssueAccessToken(request);
+        String refreshToken = (request.getAttribute("refreshToken") != null ? request.getAttribute("refreshToken").toString() : "");
+        JwtToken token = loginService.reIssueAccessToken(refreshToken);
         return ResponseEntity.ok(token);
     }
 }
