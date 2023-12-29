@@ -56,10 +56,8 @@ function login(){
         success : function(json) {
             console.log(json);
             if (json.accessToken != null && json.accessToken != '') {
-                var now = new Date();
-                var expireTime = new Date(now.getTime() + 60 * 60 * 1000); // 현재 시간에 1시간을 더합니다.
-                document.cookie = 'access_token=' + json.accessToken + ';expires=' + expireTime.toUTCString() + ';path=/';
-                document.cookie = 'refresh_token=' + json.refreshToken + ';expires=' + expireTime.toUTCString() + ';path=/';
+                setCookie('access_token', json.accessToken);
+                setCookie('refresh_token', json.refreshToken);
 
                 location.href = "/";
             } else {
