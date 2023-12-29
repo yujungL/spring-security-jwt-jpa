@@ -42,11 +42,52 @@
                 <input type="text" name="email" placeholder="Email Address" class="form-control" required>
                 <i class="zmdi zmdi-email"></i>
             </div>
-            <button type="submit">Register
+            <button type="button" id="register-button">Register
                 <i class="zmdi zmdi-arrow-right"></i>
             </button>
         </form>
     </div>
 </div>
 </body>
+
+<script>
+$(document).ready(function(){
+    $("#register-button").on("click", function(){ register() });
+});
+
+function register(){
+    console.log('register');
+    var data = new FormData(document.getElementById('register-form'));
+    // FormData에 담긴 값 가져오기
+    for (const pair of data.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+    }
+
+    $.ajax({
+        type : "POST",
+        dataType : "json",
+        data : data,
+        async: true,
+        processData: false,
+        contentType: false,
+        url : "/api/login/register-proc",
+        success : function(json) {
+            if('success' == json.status){
+                alert('가입 성공');
+                location.href = '/login';
+            }else{
+                alert('가입 실패!');
+                console.log(json);
+            }
+        },
+        error : function (jqXHR, textStatus, errorThrown){
+            console.log('error===============\n');
+            console.log(jqXHR);
+<!--            alert(jqXHR.responseJSON.message);-->
+<!--            location.href = jqXHR.responseJSON.redirect;-->
+        }
+    });
+}
+</script>
+
 </html>
