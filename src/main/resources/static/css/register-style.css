@@ -106,19 +106,19 @@ a:hover {
   margin-bottom: 25px; }
   .form-control::-webkit-input-placeholder {
     font-size: 13px;
-    color: #333;
+    color: #E6E6E6;
     font-family: "Poppins-Regular"; }
   .form-control::-moz-placeholder {
     font-size: 13px;
-    color: #333;
+    color: #E6E6E6;
     font-family: "Poppins-Regular"; }
   .form-control:-ms-input-placeholder {
     font-size: 13px;
-    color: #333;
+    color: #E6E6E6;
     font-family: "Poppins-Regular"; }
   .form-control:-moz-placeholder {
     font-size: 13px;
-    color: #333;
+    color: #E6E6E6;
     font-family: "Poppins-Regular"; }
 
 select {

@@ -120,12 +120,12 @@ function deleteCookie(cookieName){
     document.cookie = cookieName + '=;expires=' + expireTime.toUTCString() + ';path=/';
 }
 
-function goPage(url, token){
+function goPage(url){
     fetch(url, {
       method: 'GET',
       headers: {
         'Content-type': 'application/json',
-        'Authorization': 'Bearer ' + token,
+        'Authorization': 'Bearer ' + getCookie("access_token"),
       }
     })
     .then(response => {
