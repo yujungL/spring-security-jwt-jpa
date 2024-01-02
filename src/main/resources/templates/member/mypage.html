@@ -38,16 +38,83 @@
                 <input type="text" name="email" placeholder="Email Address" class="form-control" required>
                 <i class="zmdi zmdi-email"></i>
             </div>
-            <button type="button" >Modify
+            <button type="button" id="modify-button">Modify
                 <i class="zmdi zmdi-arrow-right"></i>
             </button>
         </form>
     </div>
 </div>
 <script>
-$(function{
+$(function(){
+    getMyInfo();
 
+    $("#modify-button").on("click", function(){ modify() });
 });
+
+function getMyInfo(){
+    var token = getCookie("access_token");
+    if(token != null){
+        $.ajax({
+            type : "GET",
+            dataType : "json",
+            async: true,
+            processData: false,
+            contentType: false,
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('Content-type', 'application/json');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            url : "/api/member/getMyInfo",
+            success : function(json) {
+                console.log(json);
+                if('success' == json.status){
+                    var data = json.data;
+                    var frm = document.forms[0];
+                    frm.userId.value = data.userId;
+                    frm.firstName.value = data.firstName;
+                    frm.lastName.value = data.lastName;
+                    frm.email.value = data.email;
+
+                }else{
+                    alert(json.message);
+                }
+            },
+            error : function (jqXHR, textStatus, errorThrown){
+                console.log('error===============\n');
+                console.log(jqXHR);
+            }
+        });
+    }else{
+        location.href = '/';
+    }
+}
+
+function modify(){
+    console.log('modify');
+    var data = new FormData(document.getElementById('modify-form'));
+    $.ajax({
+        type : "POST",
+        dataType : "json",
+        data : data,
+        async: true,
+        processData: false,
+        contentType: false,
+        url : "/api/member/modify-proc",
+        success : function(json) {
+            if('success' == json.status){
+                alert('수정 성공');
+                location.href = '/member/mypage';
+            }else{
+                alert(json.message);
+                console.log(json);
+            }
+        },
+        error : function (jqXHR, textStatus, errorThrown){
+            console.log('error===============\n');
+            console.log(jqXHR);
+        }
+    });
+}
 </script>
 </body>
 </html>
