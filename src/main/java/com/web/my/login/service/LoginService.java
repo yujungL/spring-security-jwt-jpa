@@ -73,7 +73,7 @@ public class LoginService {
     public Response register(Member member){
         Member duplicate = memberRepository.findByUserId(member.getUserId());
         if(duplicate != null){
-            throw new RuntimeException("이미 가입되어있는 유저입니다.");
+            return new Response(ResponseStatus.FAILURE, "이미 가입되어있는 회원입니다.");
         }
         member.setPassword(passwordEncoder.encode(member.getPassword()));
         member.setRole(Role.USER.name());

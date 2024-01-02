@@ -76,7 +76,7 @@ function register(){
                 alert('가입 성공');
                 location.href = '/login';
             }else{
-                alert('가입 실패!');
+                alert(json.message);
                 console.log(json);
             }
         },
